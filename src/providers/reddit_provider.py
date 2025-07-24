@@ -8,8 +8,16 @@ import httpx
 from datetime import datetime, timedelta
 import json
 
-from ..models.post import Post
-from ..utils.logger import get_logger
+try:
+    from ..models.post import Post
+    from ..utils.logger import get_logger
+except ImportError:
+    # For direct execution/testing
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+    from models.post import Post
+    from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -24,14 +32,18 @@ class RedditProvider:
     def __init__(self, max_results: int = 10):
         """Initialize the Reddit provider."""
         self.max_results = max_results
-        self.base_url = "https://api.pushshift.io/reddit/search/submission"
-        
+        # Use Reddit's JSON API (no auth required for public posts)
+        self.base_url = "https://www.reddit.com"
+
         # HTTP client with timeout and retries
         self.client = httpx.AsyncClient(
             timeout=30.0,
-            limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+            limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
+            headers={
+                "User-Agent": "SentientEcho/1.0 (Reddit Search Bot)"
+            }
         )
-        
+
         logger.info(f"Initialized Reddit provider with max_results: {max_results}")
     
     async def search_posts(
@@ -42,58 +54,63 @@ class RedditProvider:
         min_score: int = 1
     ) -> List[Post]:
         """
-        Search Reddit posts using Pushshift API.
-        
+        Search Reddit posts using Reddit's JSON API.
+
         Args:
             keywords: List of keywords to search for
             subreddit: Specific subreddit to search (optional)
             time_range: Time range for search (day, week, month, year)
             min_score: Minimum score threshold
-            
+
         Returns:
             List of Post objects
         """
         try:
-            # Calculate time range
-            time_filter = self._get_time_filter(time_range)
-            
             # Build search query
             query = " ".join(keywords)
-            
-            params = {
-                "q": query,
-                "size": self.max_results,
-                "sort": "score",
-                "sort_type": "desc",
-                "after": time_filter,
-                "score": f">{min_score}",
-                "fields": "id,title,selftext,author,created_utc,score,num_comments,subreddit,url,permalink"
-            }
-            
+
+            # If subreddit specified, search within that subreddit
             if subreddit:
-                params["subreddit"] = subreddit
-            
+                search_url = f"{self.base_url}/r/{subreddit}/search.json"
+                params = {
+                    "q": query,
+                    "restrict_sr": "on",  # Restrict to subreddit
+                    "sort": "relevance",
+                    "t": time_range,
+                    "limit": self.max_results
+                }
+            else:
+                # Search all of Reddit
+                search_url = f"{self.base_url}/search.json"
+                params = {
+                    "q": query,
+                    "sort": "relevance",
+                    "t": time_range,
+                    "limit": self.max_results
+                }
+
             logger.info(f"Searching Reddit with query: {query}, subreddit: {subreddit}")
-            
-            response = await self.client.get(self.base_url, params=params)
+
+            response = await self.client.get(search_url, params=params)
             response.raise_for_status()
-            
+
             data = response.json()
             posts = []
-            
-            if "data" in data:
-                for item in data["data"]:
+
+            if "data" in data and "children" in data["data"]:
+                for item in data["data"]["children"]:
                     try:
-                        post = self._parse_reddit_post(item)
-                        if post:
+                        post_data = item.get("data", {})
+                        post = self._parse_reddit_post(post_data)
+                        if post and post.metadata.get("score", 0) >= min_score:
                             posts.append(post)
                     except Exception as e:
                         logger.warning(f"Error parsing Reddit post: {e}")
                         continue
-            
+
             logger.info(f"Found {len(posts)} Reddit posts")
             return posts
-            
+
         except Exception as e:
             logger.error(f"Error searching Reddit: {e}")
             return []

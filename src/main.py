@@ -6,9 +6,18 @@ import asyncio
 import sys
 from sentient_agent_framework import DefaultServer
 
-from .sentient_echo_agent import SentientEchoAgent
-from .config import get_settings, validate_config
-from .utils.logger import get_logger
+try:
+    from .sentient_echo_agent import SentientEchoAgent
+    from .config import get_settings, validate_config
+    from .utils.logger import get_logger
+except ImportError:
+    # For direct execution/testing
+    import sys
+    import os
+    sys.path.append(os.path.dirname(__file__))
+    from sentient_echo_agent import SentientEchoAgent
+    from config import get_settings, validate_config
+    from utils.logger import get_logger
 
 logger = get_logger(__name__)
 

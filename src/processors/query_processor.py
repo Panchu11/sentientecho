@@ -3,9 +3,18 @@ Query processor for analyzing and preprocessing user queries.
 """
 
 from typing import Dict, Any, List
-from ..models.post import ProcessedQuery
-from ..providers.ai_provider import AIProvider
-from ..utils.logger import get_logger
+try:
+    from ..models.post import ProcessedQuery
+    from ..providers.ai_provider import AIProvider
+    from ..utils.logger import get_logger
+except ImportError:
+    # For direct execution/testing
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+    from models.post import ProcessedQuery
+    from providers.ai_provider import AIProvider
+    from utils.logger import get_logger
 
 logger = get_logger(__name__)
 

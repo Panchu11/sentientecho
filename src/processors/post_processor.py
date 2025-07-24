@@ -4,9 +4,18 @@ Post processor for ranking, filtering, and enhancing social media posts.
 
 import asyncio
 from typing import List, Dict, Any
-from ..models.post import Post
-from ..providers.ai_provider import AIProvider
-from ..utils.logger import get_logger
+try:
+    from ..models.post import Post
+    from ..providers.ai_provider import AIProvider
+    from ..utils.logger import get_logger
+except ImportError:
+    # For direct execution/testing
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+    from models.post import Post
+    from providers.ai_provider import AIProvider
+    from utils.logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -12,13 +12,26 @@ from sentient_agent_framework import (
     ResponseHandler
 )
 
-from .config import get_settings
-from .providers.ai_provider import AIProvider
-from .providers.reddit_provider import RedditProvider
-from .providers.twitter_provider import TwitterProvider
-from .processors.query_processor import QueryProcessor
-from .processors.post_processor import PostProcessor
-from .utils.logger import get_logger
+try:
+    from .config import get_settings
+    from .providers.ai_provider import AIProvider
+    from .providers.reddit_provider import RedditProvider
+    from .providers.twitter_provider import TwitterProvider
+    from .processors.query_processor import QueryProcessor
+    from .processors.post_processor import PostProcessor
+    from .utils.logger import get_logger
+except ImportError:
+    # For direct execution/testing
+    import sys
+    import os
+    sys.path.append(os.path.dirname(__file__))
+    from config import get_settings
+    from providers.ai_provider import AIProvider
+    from providers.reddit_provider import RedditProvider
+    from providers.twitter_provider import TwitterProvider
+    from processors.query_processor import QueryProcessor
+    from processors.post_processor import PostProcessor
+    from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -47,7 +60,8 @@ class SentientEchoAgent(AbstractAgent):
         )
         
         self.twitter_provider = TwitterProvider(
-            max_results=self.settings.max_twitter_results
+            max_results=self.settings.max_twitter_results,
+            serper_api_key=self.settings.serper_api_key
         )
         
         # Initialize processors

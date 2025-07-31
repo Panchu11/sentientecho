@@ -127,9 +127,14 @@ class EnhancedSentientServer:
         # Add CORS middleware
         self.app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],  # Configure appropriately for production
+            allow_origins=[
+                "https://sentientchat.com",
+                "https://*.sentientchat.com",
+                "http://localhost:3000",  # For development
+                "http://localhost:8000",  # For development
+            ],
             allow_credentials=True,
-            allow_methods=["*"],
+            allow_methods=["GET", "POST", "PUT", "DELETE"],
             allow_headers=["*"],
         )
         

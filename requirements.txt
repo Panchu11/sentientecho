@@ -17,12 +17,15 @@ numpy>=1.24.0
 # Content processing and enhancement
 jina>=3.20.0  # Jina AI for content processing
 
+# Data processing
+pandas>=2.1.0
+python-dateutil>=2.8.2
+pytz>=2023.3
+
 # Twitter scraping
 snscrape>=0.7.0  # Twitter scraping fallback
 
-# Data processing and utilities
-python-dateutil>=2.8.2
-pytz>=2023.3
+
 
 # Environment and configuration
 python-dotenv>=1.0.0

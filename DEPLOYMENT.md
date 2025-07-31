@@ -91,10 +91,10 @@ CMD ["python", "src/main.py"]
 
 Required environment variables:
 ```env
-FIREWORKS_API_KEY=fw_3ZR6rssgw5u2XspeDZCDrWkC
+FIREWORKS_API_KEY=your_fireworks_api_key_here
 FIREWORKS_MODEL_ID=accounts/sentientfoundation/models/dobby-unhinged-llama-3-3-70b-new
-SERPER_API_KEY=83da55c79762a32033c05585ce1f50dda166c37e
-JINA_AI_API_KEY=jina_e80c8f082ef245c2b93a1d5cef0856e9vk3grsgsd03lyeKScnS5EYihPVyX
+SERPER_API_KEY=your_serper_api_key_here
+JINA_AI_API_KEY=your_jina_ai_api_key_here
 AGENT_NAME=SentientEcho
 AGENT_PORT=8000
 ```

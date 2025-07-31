@@ -175,7 +175,9 @@ async def test_jina_integration():
         from datetime import datetime
         
         # Create Jina provider
-        jina_provider = JinaProvider(api_key="jina_e80c8f082ef245c2b93a1d5cef0856e9vk3grsgsd03lyeKScnS5EYihPVyX")
+        from config import get_settings
+        settings = get_settings()
+        jina_provider = JinaProvider(api_key=settings.jina_ai_api_key)
         print("✅ Jina provider created")
         
         # Test similarity calculation

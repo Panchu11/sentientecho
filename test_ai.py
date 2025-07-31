@@ -17,9 +17,11 @@ async def test_ai_provider():
     """Test AI provider functionality."""
     print("🧠 Testing AI provider...")
     
-    # Initialize with Fireworks credentials
-    api_key = "fw_3ZR6rssgw5u2XspeDZCDrWkC"
-    model_id = "accounts/sentientfoundation/models/dobby-unhinged-llama-3-3-70b-new"
+    # Initialize with Fireworks credentials from environment
+    from config import get_settings
+    settings = get_settings()
+    api_key = settings.fireworks_api_key
+    model_id = settings.fireworks_model_id
     
     provider = AIProvider(api_key=api_key, model_id=model_id)
     

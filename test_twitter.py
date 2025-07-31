@@ -18,8 +18,10 @@ async def test_twitter_search():
     """Test Twitter search functionality."""
     print("🔍 Testing Twitter search...")
 
-    # Use Serper API key for testing
-    serper_api_key = "83da55c79762a32033c05585ce1f50dda166c37e"
+    # Use Serper API key from environment
+    from config import get_settings
+    settings = get_settings()
+    serper_api_key = settings.serper_api_key
     provider = TwitterProvider(max_results=5, serper_api_key=serper_api_key)
     
     try:

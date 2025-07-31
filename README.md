@@ -216,10 +216,22 @@ LOG_LEVEL=INFO
 
 ## 📚 **Documentation**
 
-- **[API Documentation](API.md)** - Complete API reference
-- **[Architecture Guide](ARCHITECTURE.md)** - Technical architecture details
-- **[Integration Guide](INTEGRATION_GUIDE.md)** - SentientChat integration
-- **[Deployment Guide](DEPLOYMENT.md)** - Production deployment instructions
+### **📖 User Documentation**
+- **[User Guide](docs/USER_GUIDE.md)** - Complete user guide with examples and best practices
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+
+### **🔧 Technical Documentation**
+- **[API Documentation](docs/API.md)** - Complete API reference
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - Technical architecture details
+- **[Configuration Guide](docs/CONFIGURATION.md)** - Complete configuration reference
+
+### **🚀 Integration & Deployment**
+- **[Integration Guide](docs/INTEGRATION_GUIDE.md)** - SentientChat integration
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment instructions
+
+### **👨‍💻 Developer Documentation**
+- **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Complete developer documentation
+- **[Contributing Guide](docs/CONTRIBUTING.md)** - Contribution guidelines and workflow
 
 ## 🤝 **SentientChat Integration**
 

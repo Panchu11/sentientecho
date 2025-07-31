@@ -4,6 +4,7 @@ SentientEcho Agent - Main agent implementation for Reddit/Twitter query processi
 
 import logging
 import asyncio
+import time
 from typing import Dict, List, Any, Optional
 from sentient_agent_framework import (
     AbstractAgent,
@@ -17,9 +18,11 @@ try:
     from .providers.ai_provider import AIProvider
     from .providers.reddit_provider import RedditProvider
     from .providers.twitter_provider import TwitterProvider
+    from .providers.jina_provider import JinaProvider
     from .processors.query_processor import QueryProcessor
     from .processors.post_processor import PostProcessor
     from .utils.logger import get_logger
+    from .utils.cache import get_cached_query_result, cache_query_result
 except ImportError:
     # For direct execution/testing
     import sys
@@ -29,9 +32,11 @@ except ImportError:
     from providers.ai_provider import AIProvider
     from providers.reddit_provider import RedditProvider
     from providers.twitter_provider import TwitterProvider
+    from providers.jina_provider import JinaProvider
     from processors.query_processor import QueryProcessor
     from processors.post_processor import PostProcessor
     from utils.logger import get_logger
+    from utils.cache import get_cached_query_result, cache_query_result
 
 logger = get_logger(__name__)
 
@@ -63,10 +68,14 @@ class SentientEchoAgent(AbstractAgent):
             max_results=self.settings.max_twitter_results,
             serper_api_key=self.settings.serper_api_key
         )
-        
+
+        self.jina_provider = JinaProvider(
+            api_key=self.settings.jina_ai_api_key
+        )
+
         # Initialize processors
         self.query_processor = QueryProcessor(self.ai_provider)
-        self.post_processor = PostProcessor(self.ai_provider)
+        self.post_processor = PostProcessor(self.ai_provider, self.jina_provider)
         
         logger.info(f"Initialized {name} agent with all providers")
     
@@ -86,7 +95,32 @@ class SentientEchoAgent(AbstractAgent):
         """
         try:
             logger.info(f"Processing query: {query.prompt}")
-            
+
+            # Check cache first
+            cached_result = await get_cached_query_result(query.prompt)
+            if cached_result:
+                logger.info(f"Returning cached result for query: {query.prompt[:50]}...")
+
+                # Stream cached response
+                await response_handler.emit_text_block("CACHE_HIT", "⚡ Found cached result!")
+
+                # Emit cached events
+                for event in cached_result.get("events", []):
+                    if event["type"] == "text_block":
+                        await response_handler.emit_text_block(event["event_type"], event["content"])
+                    elif event["type"] == "json":
+                        await response_handler.emit_json(event["event_type"], event["data"])
+
+                # Stream final response
+                final_response = cached_result.get("final_response", "")
+                if final_response:
+                    stream = response_handler.create_text_stream("FINAL_RESPONSE")
+                    await stream.emit_chunk(final_response)
+                    await stream.complete()
+
+                await response_handler.complete()
+                return
+
             # Step 1: Process and understand the query
             await response_handler.emit_text_block(
                 "QUERY_ANALYSIS", "🧠 Analyzing your query..."
@@ -225,7 +259,21 @@ class SentientEchoAgent(AbstractAgent):
             # Complete the response
             await final_response_stream.complete()
             await response_handler.complete()
-            
+
+            # Cache the result for future queries
+            try:
+                # Collect response data for caching
+                cache_data = {
+                    "events": [],  # Would need to collect events during processing
+                    "final_response": getattr(final_response_stream, 'content', ''),
+                    "processed_posts_count": len(processed_posts),
+                    "timestamp": time.time()
+                }
+                await cache_query_result(query.prompt, cache_data)
+                logger.debug(f"Cached result for query: {query.prompt[:50]}...")
+            except Exception as cache_error:
+                logger.warning(f"Failed to cache result: {cache_error}")
+
             logger.info(f"Successfully processed query with {len(processed_posts)} posts")
             
         except Exception as e:

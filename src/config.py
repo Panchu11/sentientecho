@@ -60,7 +60,7 @@ def validate_config():
     """Validate that all required configuration is present."""
     required_fields = [
         "fireworks_api_key",
-        "fireworks_model_id", 
+        "fireworks_model_id",
         "serper_api_key",
         "jina_ai_api_key"
     ]

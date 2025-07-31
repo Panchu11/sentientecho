@@ -10,6 +10,7 @@ try:
     from .sentient_echo_agent import SentientEchoAgent
     from .config import get_settings, validate_config
     from .utils.logger import get_logger
+    from .server import EnhancedSentientServer
 except ImportError:
     # For direct execution/testing
     import sys
@@ -18,6 +19,7 @@ except ImportError:
     from sentient_echo_agent import SentientEchoAgent
     from config import get_settings, validate_config
     from utils.logger import get_logger
+    from server import EnhancedSentientServer
 
 logger = get_logger(__name__)
 
@@ -35,13 +37,13 @@ async def main():
         # Create the agent
         agent = SentientEchoAgent(name=settings.agent_name)
         logger.info(f"Created {settings.agent_name} agent")
-        
-        # Create and configure the server
-        server = DefaultServer(agent)
-        logger.info(f"Created server for {settings.agent_name}")
-        
+
+        # Create and configure the enhanced server
+        server = EnhancedSentientServer(agent)
+        logger.info(f"Created enhanced server for {settings.agent_name}")
+
         # Start the server
-        logger.info(f"Starting server on {settings.agent_host}:{settings.agent_port}")
+        logger.info(f"Starting enhanced server on {settings.agent_host}:{settings.agent_port}")
         server.run(
             host=settings.agent_host,
             port=settings.agent_port,
@@ -60,12 +62,12 @@ def run_server():
     try:
         validate_config()
         settings = get_settings()
-        
+
         agent = SentientEchoAgent(name=settings.agent_name)
-        server = DefaultServer(agent)
-        
-        return server._app  # Return Flask app for WSGI servers
-        
+        server = EnhancedSentientServer(agent)
+
+        return server.app  # Return FastAPI app for ASGI servers
+
     except Exception as e:
         logger.error(f"Failed to create server: {e}", exc_info=True)
         raise

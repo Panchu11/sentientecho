@@ -7,6 +7,7 @@ from typing import List, Dict, Any
 try:
     from ..models.post import Post
     from ..providers.ai_provider import AIProvider
+    from ..providers.jina_provider import JinaProvider, process_posts_with_jina
     from ..utils.logger import get_logger
 except ImportError:
     # For direct execution/testing
@@ -15,6 +16,7 @@ except ImportError:
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
     from models.post import Post
     from providers.ai_provider import AIProvider
+    from providers.jina_provider import JinaProvider, process_posts_with_jina
     from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -25,10 +27,11 @@ class PostProcessor:
     Processes and enhances posts with AI-powered analysis.
     """
     
-    def __init__(self, ai_provider: AIProvider):
-        """Initialize with AI provider for post analysis."""
+    def __init__(self, ai_provider: AIProvider, jina_provider: JinaProvider = None):
+        """Initialize with AI provider and optional Jina provider for post analysis."""
         self.ai_provider = ai_provider
-        logger.info("Initialized PostProcessor")
+        self.jina_provider = jina_provider
+        logger.info(f"Initialized PostProcessor with Jina: {jina_provider is not None}")
     
     async def process_posts(
         self,
@@ -67,8 +70,17 @@ class PostProcessor:
             # Step 3: Analyze posts in parallel
             enhanced_posts = await self._enhance_posts_parallel(filtered_posts, query)
             logger.info(f"Enhanced {len(enhanced_posts)} posts")
-            
-            # Step 4: Rank by relevance and engagement
+
+            # Step 4: Apply Jina AI processing if available
+            if self.jina_provider:
+                try:
+                    jina_enhanced_posts = await process_posts_with_jina(enhanced_posts, query, self.jina_provider)
+                    enhanced_posts = jina_enhanced_posts
+                    logger.info(f"Applied Jina AI processing to {len(enhanced_posts)} posts")
+                except Exception as e:
+                    logger.warning(f"Jina AI processing failed, continuing without: {e}")
+
+            # Step 5: Rank by relevance and engagement
             ranked_posts = self._rank_posts(enhanced_posts)
             
             # Step 5: Return top posts
@@ -282,7 +294,11 @@ class PostProcessor:
             # Source diversity bonus
             if post.source == "Reddit":
                 score += 0.05  # Slight preference for Reddit due to discussion quality
-            
+
+            # Jina AI relevance bonus (if available)
+            if hasattr(post, 'jina_relevance_score') and post.jina_relevance_score is not None:
+                score += post.jina_relevance_score * 0.3  # Weight Jina score
+
             return score
         
         # Calculate scores and sort

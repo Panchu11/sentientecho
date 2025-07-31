@@ -374,28 +374,46 @@ class TwitterProvider:
             if len(content.strip()) < 10:
                 return None
 
+            # Skip if not a Twitter link
+            if "twitter.com" not in link and "x.com" not in link:
+                return None
+
             # Extract username from link if possible
             author = "unknown"
-            if "twitter.com/" in link:
+            if "twitter.com/" in link or "x.com/" in link:
                 try:
-                    username = link.split("twitter.com/")[1].split("/")[0]
+                    # Handle both twitter.com and x.com domains
+                    domain_part = link.split("twitter.com/")[1] if "twitter.com/" in link else link.split("x.com/")[1]
+                    username = domain_part.split("/")[0]
                     author = f"@{username}"
                 except:
                     pass
 
-            # Create Post object with limited metadata
+            # Try to extract engagement hints from snippet
+            engagement_score = 50  # Default score
+            snippet_lower = snippet.lower()
+
+            # Look for engagement indicators in snippet
+            if any(word in snippet_lower for word in ["viral", "trending", "popular"]):
+                engagement_score += 30
+            if any(word in snippet_lower for word in ["likes", "retweets", "shares"]):
+                engagement_score += 20
+
+            # Create Post object with enhanced metadata
             post = Post(
-                id=link.split("/")[-1] if "/" in link else "",
+                id=f"serper_{hash(link)}",
                 source="Twitter",
                 content=content,
                 author=author,
                 created_at=datetime.now(),  # Serper doesn't provide exact timestamps
                 url=link,
-                engagement_score=1.0,  # Default score since we don't have engagement data
+                engagement_score=engagement_score,
                 metadata={
                     "source_method": "serper",
                     "title": title,
-                    "snippet": snippet
+                    "snippet": snippet,
+                    "estimated_engagement": True,
+                    "domain": "twitter.com" if "twitter.com" in link else "x.com"
                 }
             )
 
